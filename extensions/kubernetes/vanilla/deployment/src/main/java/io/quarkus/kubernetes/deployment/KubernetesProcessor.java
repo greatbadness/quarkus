@@ -96,6 +96,7 @@ import io.dekorate.kubernetes.decorator.ApplyCommandDecorator;
 import io.dekorate.kubernetes.decorator.ApplyImagePullPolicyDecorator;
 import io.dekorate.kubernetes.decorator.ApplyServiceAccountNamedDecorator;
 import io.dekorate.kubernetes.decorator.ApplyWorkingDirDecorator;
+import io.dekorate.kubernetes.decorator.Decorator;
 import io.dekorate.kubernetes.decorator.RemoveAnnotationDecorator;
 import io.dekorate.kubernetes.decorator.RemoveFromMatchingLabelsDecorator;
 import io.dekorate.kubernetes.decorator.RemoveFromSelectorDecorator;
@@ -114,6 +115,7 @@ import io.dekorate.s2i.decorator.AddBuilderImageStreamResourceDecorator;
 import io.dekorate.utils.Annotations;
 import io.dekorate.utils.Labels;
 import io.dekorate.utils.Maps;
+import io.dekorate.utils.Strings;
 import io.quarkus.container.image.deployment.util.ImageUtil;
 import io.quarkus.container.spi.BaseImageInfoBuildItem;
 import io.quarkus.container.spi.ContainerImageInfoBuildItem;
@@ -131,6 +133,7 @@ import io.quarkus.deployment.pkg.PackageConfig;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.deployment.util.FileUtil;
 import io.quarkus.kubernetes.deployment.Annotations.Prometheus;
+import io.quarkus.kubernetes.spi.DecoratorBuildItem;
 import io.quarkus.kubernetes.spi.KubernetesAnnotationBuildItem;
 import io.quarkus.kubernetes.spi.KubernetesCommandBuildItem;
 import io.quarkus.kubernetes.spi.KubernetesDeploymentTargetBuildItem;
@@ -281,6 +284,7 @@ class KubernetesProcessor {
             List<KubernetesRoleBindingBuildItem> kubernetesRoleBindings,
             List<KubernetesPortBuildItem> kubernetesPorts,
             EnabledKubernetesDeploymentTargetsBuildItem kubernetesDeploymentTargets,
+            List<DecoratorBuildItem> decorators,
             Optional<BaseImageInfoBuildItem> baseImage,
             Optional<ContainerImageInfoBuildItem> containerImage,
             Optional<KubernetesCommandBuildItem> command,
@@ -377,6 +381,16 @@ class KubernetesProcessor {
                     command,
                     kubernetesHealthLivenessPath,
                     kubernetesHealthReadinessPath);
+
+            decorators.stream().filter(d -> d.matches(Decorator.class)).forEach(i -> {
+                String group = i.getGroup();
+                Decorator decorator = (Decorator) i.getDecorator();
+                if (Strings.isNullOrEmpty(group)) {
+                    session.resources().decorate(decorator);
+                } else {
+                    session.resources().decorate(group, decorator);
+                }
+            });
 
             // write the generated resources to the filesystem
             generatedResourcesMap = session.close();
