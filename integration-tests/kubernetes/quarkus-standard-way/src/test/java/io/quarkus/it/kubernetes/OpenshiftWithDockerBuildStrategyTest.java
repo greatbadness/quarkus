@@ -42,7 +42,7 @@ public class OpenshiftWithDockerBuildStrategyTest {
                 .isDirectoryContaining(p -> p.getFileName().endsWith("openshift.yml"));
         List<HasMetadata> openshiftList = DeserializationUtil.deserializeAsList(kubernetesDir.resolve("openshift.yml"));
 
-        assertThat(openshiftList).filteredOn(h -> "BuildConfig".equals(h.getKind())).hasOnlyOneElementSatisfying(h -> {
+        assertThat(openshiftList).filteredOn(h -> "BuildConfig".equals(h.getKind())).singleElement().satisfies(h -> {
             assertThat(h.getMetadata()).satisfies(m -> {
                 assertThat(m.getName()).isEqualTo("openshift-s2i");
                 assertThat(m.getLabels().get("app.openshift.io/runtime")).isEqualTo("quarkus");

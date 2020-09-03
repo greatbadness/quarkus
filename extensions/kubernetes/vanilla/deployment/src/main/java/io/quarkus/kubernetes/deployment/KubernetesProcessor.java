@@ -359,7 +359,8 @@ class KubernetesProcessor {
             applyOpenshiftSpecificConfig(session, openshiftConfig);
             applyKnativeSpecificConfig(session, getResourceName(knativeConfig, applicationInfo), knativeConfig);
 
-            if (!capabilities.isCapabilityPresent(Capabilities.CONTAINER_IMAGE_S2I)) {
+            if (!capabilities.isCapabilityPresent(Capabilities.CONTAINER_IMAGE_S2I)
+                    && !capabilities.isCapabilityPresent(Capabilities.CONTAINER_IMAGE_OPENSHIFT)) {
                 handleNonS2IOpenshift(containerImage, session);
             }
 
